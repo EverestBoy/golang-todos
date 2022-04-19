@@ -18,8 +18,12 @@ import (
 @author everestboy
 */
 type MongoInterface interface {
-	GetCollection(databaseName string, collectionName string) (context.Context, *mongo.Client, *mongo.Collection, error, context.CancelFunc)
+	GetCollection(databaseName string, collectionName string) (error, context.Context, *mongo.Client, *mongo.Collection, context.CancelFunc)
 }
+
+const (
+	mongoURI = "uri"
+)
 
 type mongoDb struct{}
 
@@ -27,13 +31,12 @@ func NewMongoDbConnection() MongoInterface {
 	return &mongoDb{}
 }
 
-func (*mongoDb) GetCollection(databaseName string, collectionName string) (context.Context, *mongo.Client, *mongo.Collection, error, context.CancelFunc) {
+func (*mongoDb) GetCollection(databaseName string, collectionName string) (error, context.Context, *mongo.Client, *mongo.Collection, context.CancelFunc) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb Url"))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))
 	if err != nil {
-		println("Error occured")
-		println(err)
+		return err, nil, nil, nil, nil
 	}
 	collection := client.Database(databaseName).Collection(collectionName)
-	return ctx, client, collection, err, cancel
+	return nil, ctx, client, collection, cancel
 }

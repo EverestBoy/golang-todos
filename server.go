@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"todoGo/controller"
+	"todoGo/handler/impl"
 )
 
 /*
@@ -20,7 +20,8 @@ import (
 */
 
 var (
-	todoController controller.TODOController = controller.NewTODOController()
+	todoHandler = impl.NewTODOHandler()
+	authHandler = impl.NewAuthHandler()
 )
 
 func main() {
@@ -30,11 +31,17 @@ func main() {
 		fmt.Fprintln(writer, "Up and runniing")
 	})
 
-	router.HandleFunc("/todo", todoController.GetTodo).Methods("GET")
-	router.HandleFunc("/todos", todoController.GetTodos).Methods("GET")
-	router.HandleFunc("/todo", todoController.UpdateTodo).Methods("PUT")
-	router.HandleFunc("/todo", todoController.AddTodos).Methods("POST")
-	router.HandleFunc("/todo", todoController.DeleteTodo).Methods("DELETE")
+	// auth handler
+	router.HandleFunc("/login", authHandler.UserTokenLogin).Methods("GET")
+	router.HandleFunc("/login", authHandler.UserEmailLogin).Methods("POST")
+	router.HandleFunc("/register", authHandler.UserRegister).Methods("POST")
+
+	// to-do handler
+	router.HandleFunc("/todo", todoHandler.GetTodo).Methods("GET")
+	router.HandleFunc("/todos", todoHandler.GetTodos).Methods("GET")
+	router.HandleFunc("/todo", todoHandler.UpdateTodo).Methods("PUT")
+	router.HandleFunc("/todo", todoHandler.AddTodos).Methods("POST")
+	router.HandleFunc("/todo", todoHandler.DeleteTodo).Methods("DELETE")
 	log.Println("Server listening on port ", port)
 	log.Fatalln(http.ListenAndServe(port, router))
 }

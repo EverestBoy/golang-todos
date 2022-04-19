@@ -35,8 +35,11 @@ func NewTodoRepository() repository.TODORepository {
 }
 
 func (r repo) FindTodo(todoId *string) (*model.TodoModel, error) {
-	ctx, client, collection, err, cancel := dbConnection.GetCollection("test", "todo")
+	err, ctx, client, collection, cancel := dbConnection.GetCollection("test", "todo")
 	defer cancel()
+	if err != nil {
+		return nil, err
+	}
 	defer client.Disconnect(ctx)
 	if err != nil {
 		return nil, err
@@ -53,13 +56,12 @@ func (r repo) FindTodo(todoId *string) (*model.TodoModel, error) {
 }
 
 func (r repo) FindAllTodo() ([]model.TodoModel, error) {
-	ctx, client, collection, err, cancel := dbConnection.GetCollection("test", "todo")
-	defer cancel()
-	defer client.Disconnect(ctx)
+	err, ctx, client, collection, cancel := dbConnection.GetCollection("test", "todo")
 	if err != nil {
-		println(err)
 		return nil, err
 	}
+	defer cancel()
+	defer client.Disconnect(ctx)
 	cur, err := collection.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, err
@@ -79,8 +81,11 @@ func (r repo) FindAllTodo() ([]model.TodoModel, error) {
 }
 
 func (r repo) SaveTodo(todo *model.TodoModel) (*model.TodoModel, error) {
-	ctx, client, collection, err, cancel := dbConnection.GetCollection("test", "todo")
+	err, ctx, client, collection, cancel := dbConnection.GetCollection("test", "todo")
 	defer cancel()
+	if err != nil {
+		return nil, err
+	}
 	defer client.Disconnect(ctx)
 	if err != nil {
 		return nil, err
@@ -96,8 +101,11 @@ func (r repo) SaveTodo(todo *model.TodoModel) (*model.TodoModel, error) {
 }
 
 func (r repo) UpdateTodo(id *string, todo *model.TodoModel) (*model.TodoModel, error) {
-	ctx, client, collection, err, cancel := dbConnection.GetCollection("test", "todo")
+	err, ctx, client, collection, cancel := dbConnection.GetCollection("test", "todo")
 	defer cancel()
+	if err != nil {
+		return nil, err
+	}
 	defer client.Disconnect(ctx)
 	if err != nil {
 		return nil, err
@@ -125,8 +133,11 @@ func (r repo) UpdateTodo(id *string, todo *model.TodoModel) (*model.TodoModel, e
 }
 
 func (r repo) DeleteTodo(id *string) error {
-	ctx, client, collection, err, cancel := dbConnection.GetCollection("test", "todo")
+	err, ctx, client, collection, cancel := dbConnection.GetCollection("test", "todo")
 	defer cancel()
+	if err != nil {
+		return err
+	}
 	defer client.Disconnect(ctx)
 	if err != nil {
 		return err

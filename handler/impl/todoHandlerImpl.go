@@ -5,7 +5,7 @@
  *
  */
 
-package controller
+package impl
 
 import (
 	"encoding/json"
@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"todoGo/handler"
 	"todoGo/model"
 	"todoGo/service/impl"
 )
@@ -26,21 +27,13 @@ var (
 	validationService = impl.NewValidationService()
 )
 
-type TODOController interface {
-	GetTodos(resp http.ResponseWriter, req *http.Request)
-	AddTodos(resp http.ResponseWriter, req *http.Request)
-	GetTodo(resp http.ResponseWriter, req *http.Request)
-	UpdateTodo(resp http.ResponseWriter, req *http.Request)
-	DeleteTodo(resp http.ResponseWriter, req *http.Request)
+type handlerTodo struct{}
+
+func NewTODOHandler() handler.TODOHandler {
+	return &handlerTodo{}
 }
 
-type controller struct{}
-
-func NewTODOController() TODOController {
-	return &controller{}
-}
-
-func (c controller) GetTodo(resp http.ResponseWriter, req *http.Request) {
+func (c handlerTodo) GetTodo(resp http.ResponseWriter, req *http.Request) {
 	resp.Header().Set("Content-type", "application/json")
 	id := req.URL.Query().Get("id")
 	if id == "" {
@@ -62,12 +55,12 @@ func (c controller) GetTodo(resp http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(resp).Encode(successResponse)
 }
 
-func (c controller) GetTodos(resp http.ResponseWriter, req *http.Request) {
+func (c handlerTodo) GetTodos(resp http.ResponseWriter, req *http.Request) {
 	resp.Header().Set("Content-type", "application/json")
 	todos, error := todoService.FindAllTodos()
 	if error != nil {
 		resp.WriteHeader(http.StatusNetworkAuthenticationRequired)
-		errorMessage := model.ErrorMessage{ErrorMsg: error}
+		errorMessage := model.ErrorTextMessage{ErrorMsg: error.Error()}
 		json.NewEncoder(resp).Encode(errorMessage)
 		return
 	}
@@ -76,7 +69,7 @@ func (c controller) GetTodos(resp http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(resp).Encode(successResponse)
 }
 
-func (c controller) AddTodos(resp http.ResponseWriter, req *http.Request) {
+func (c handlerTodo) AddTodos(resp http.ResponseWriter, req *http.Request) {
 	start := time.Now()
 	log.Printf("Entered todoCreation")
 	resp.Header().Set("Content-type", "application/json")
@@ -112,7 +105,7 @@ func (c controller) AddTodos(resp http.ResponseWriter, req *http.Request) {
 	log.Printf("Completed todoCreation , total time: %s", (time.Now().Sub(start)))
 }
 
-func (c controller) UpdateTodo(resp http.ResponseWriter, req *http.Request) {
+func (c handlerTodo) UpdateTodo(resp http.ResponseWriter, req *http.Request) {
 	start := time.Now()
 	log.Printf("Entered updateTodo")
 	resp.Header().Set("Content-type", "application/json")
@@ -155,7 +148,7 @@ func (c controller) UpdateTodo(resp http.ResponseWriter, req *http.Request) {
 	log.Printf("Completed todoUpdate , total time: %s", (time.Now().Sub(start)))
 }
 
-func (c controller) DeleteTodo(resp http.ResponseWriter, req *http.Request) {
+func (c handlerTodo) DeleteTodo(resp http.ResponseWriter, req *http.Request) {
 	resp.Header().Set("Content-type", "application/json")
 	id := req.URL.Query().Get("id")
 	if id == "" {
