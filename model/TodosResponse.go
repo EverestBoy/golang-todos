@@ -14,3 +14,8 @@ type TodosResponse struct {
 	Message string
 	Todos   []TodoModel
 }
+
+type TodoResponse struct {
+	Message string
+	Todo    *TodoModel
+}

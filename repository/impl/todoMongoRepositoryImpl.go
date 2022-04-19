@@ -8,7 +8,10 @@
 package impl
 
 import (
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"log"
 	"todoGo/database"
 	"todoGo/model"
 	"todoGo/repository"
@@ -27,11 +30,29 @@ type repo struct {
 }
 
 // New post repository
-func NewFirestoreRepositry() repository.TODORepository {
+func NewTodoRepository() repository.TODORepository {
 	return &repo{}
 }
 
-func (r repo) FindAll() ([]model.TodoModel, error) {
+func (r repo) FindTodo(todoId *string) (*model.TodoModel, error) {
+	ctx, client, collection, err, cancel := dbConnection.GetCollection("test", "todo")
+	defer cancel()
+	defer client.Disconnect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var todoResponse model.TodoModel
+	id, _ := primitive.ObjectIDFromHex(*todoId)
+	todoResult := collection.FindOne(ctx, bson.M{"_id": id})
+	err = todoResult.Decode(&todoResponse)
+	log.Println(todoResponse.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &todoResponse, nil
+}
+
+func (r repo) FindAllTodo() ([]model.TodoModel, error) {
 	ctx, client, collection, err, cancel := dbConnection.GetCollection("test", "todo")
 	defer cancel()
 	defer client.Disconnect(ctx)
@@ -39,16 +60,13 @@ func (r repo) FindAll() ([]model.TodoModel, error) {
 		println(err)
 		return nil, err
 	}
-	//collection.InsertOne(ctx, model.TodoModel{Id: primitive.NewObjectID(), Title: "title 1", Description: "Description 1", CreatedAt: time.Now(), UpdatedAt: time.Now()})
 	cur, err := collection.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, err
 	}
 	defer cur.Close(ctx)
 	var todos []model.TodoModel
-	println("Going throug cursor")
 	for cur.Next(ctx) {
-		println("inside cursor")
 		var result model.TodoModel
 		err := cur.Decode(&result)
 		if err == nil {
@@ -58,4 +76,70 @@ func (r repo) FindAll() ([]model.TodoModel, error) {
 		}
 	}
 	return todos, nil
+}
+
+func (r repo) SaveTodo(todo *model.TodoModel) (*model.TodoModel, error) {
+	ctx, client, collection, err, cancel := dbConnection.GetCollection("test", "todo")
+	defer cancel()
+	defer client.Disconnect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	cur, err := collection.InsertOne(ctx, todo)
+	if err != nil {
+		return nil, err
+	}
+	insertedId := cur.InsertedID.(primitive.ObjectID).Hex()
+	log.Printf("Inserted todo %s", insertedId)
+	insertedTodo, err := r.FindTodo(&insertedId)
+	return insertedTodo, err
+}
+
+func (r repo) UpdateTodo(id *string, todo *model.TodoModel) (*model.TodoModel, error) {
+	ctx, client, collection, err, cancel := dbConnection.GetCollection("test", "todo")
+	defer cancel()
+	defer client.Disconnect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	todoModel, err := r.FindTodo(id)
+	if err != nil {
+		return nil, err
+	}
+	todoModel.Title = todo.Title
+	todoModel.Description = todo.Description
+	todoModel.UpdatedAt = todo.UpdatedAt
+
+	filter := bson.M{"_id": todoModel.Id}
+	update := bson.D{
+		{"$set", todoModel},
+	}
+	updated, err := collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+
+	println(updated.UpsertedID)
+	log.Printf("Updated todo %s", id)
+	return r.FindTodo(id)
+}
+
+func (r repo) DeleteTodo(id *string) error {
+	ctx, client, collection, err, cancel := dbConnection.GetCollection("test", "todo")
+	defer cancel()
+	defer client.Disconnect(ctx)
+	if err != nil {
+		return err
+	}
+	todoModel, err := r.FindTodo(id)
+	if err != nil {
+		return errors.Errorf("Cannot perform delete operation")
+	}
+	filter := bson.M{"_id": todoModel.Id}
+	result, err := collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+	log.Printf("Deleted %d records\n", result.DeletedCount)
+	return nil
 }

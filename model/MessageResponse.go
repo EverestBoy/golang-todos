@@ -7,12 +7,6 @@
 
 package model
 
-/*
-@author everestboy
-*/
-type ErrorMessage struct {
-	ErrorMsg error
-}
-type ErrorTextMessage struct {
-	ErrorMsg string
+type MessageResponse struct {
+	Message string
 }

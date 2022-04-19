@@ -30,7 +30,11 @@ func main() {
 		fmt.Fprintln(writer, "Up and runniing")
 	})
 
+	router.HandleFunc("/todo", todoController.GetTodo).Methods("GET")
 	router.HandleFunc("/todos", todoController.GetTodos).Methods("GET")
+	router.HandleFunc("/todo", todoController.UpdateTodo).Methods("PUT")
+	router.HandleFunc("/todo", todoController.AddTodos).Methods("POST")
+	router.HandleFunc("/todo", todoController.DeleteTodo).Methods("DELETE")
 	log.Println("Server listening on port ", port)
 	log.Fatalln(http.ListenAndServe(port, router))
 }

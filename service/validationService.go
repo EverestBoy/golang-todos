@@ -5,14 +5,14 @@
  *
  */
 
-package model
+package service
+
+import "todoGo/model"
 
 /*
 @author everestboy
 */
-type ErrorMessage struct {
-	ErrorMsg error
-}
-type ErrorTextMessage struct {
-	ErrorMsg string
+
+type ValidationService interface {
+	ValidateTodo(todo *model.TodoModel) error
 }

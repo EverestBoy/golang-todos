@@ -9,28 +9,16 @@ package service
 
 import (
 	"todoGo/model"
-	"todoGo/repository/impl"
 )
 
 /*
 @author everestboy
 */
 
-// getting the repo
-var (
-	repo = impl.NewFirestoreRepositry()
-)
-
 type TodoService interface {
+	FindTodo(id *string) (todoModel *model.TodoModel, err error)
 	FindAllTodos() ([]model.TodoModel, error)
-}
-
-type service struct{}
-
-func NewTodoService() TodoService {
-	return &service{}
-}
-
-func (*service) FindAllTodos() ([]model.TodoModel, error) {
-	return repo.FindAll()
+	CreateTodo(todo *model.TodoModel) (*model.TodoModel, error)
+	UpdateTodo(id *string, todo *model.TodoModel) (*model.TodoModel, error)
+	DeleteTodo(id *string) (err error)
 }
