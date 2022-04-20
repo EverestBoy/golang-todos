@@ -29,7 +29,6 @@ var (
 type repo struct {
 }
 
-// New post repository
 func NewTodoRepository() repository.TODORepository {
 	return &repo{}
 }
@@ -48,7 +47,6 @@ func (r repo) FindTodo(todoId *string) (*model.TodoModel, error) {
 	id, _ := primitive.ObjectIDFromHex(*todoId)
 	todoResult := collection.FindOne(ctx, bson.M{"_id": id})
 	err = todoResult.Decode(&todoResponse)
-	log.Println(todoResponse.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +126,7 @@ func (r repo) UpdateTodo(id *string, todo *model.TodoModel) (*model.TodoModel, e
 	}
 
 	println(updated.UpsertedID)
-	log.Printf("Updated todo %s", id)
+	log.Println("Updated todo " + *id)
 	return r.FindTodo(id)
 }
 

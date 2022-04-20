@@ -22,7 +22,7 @@ type MongoInterface interface {
 }
 
 const (
-	mongoURI = "uri"
+	mongoURI = ""
 )
 
 type mongoDb struct{}

@@ -11,8 +11,8 @@ package model
 @author everestboy
 */
 type ErrorMessage struct {
-	ErrorMsg error
+	ErrorMsg error `json:"errorMsg"`
 }
 type ErrorTextMessage struct {
-	ErrorMsg string
+	ErrorMsg string `json:"error_msg"`
 }

@@ -8,5 +8,5 @@
 package model
 
 type MessageResponse struct {
-	Message string
+	Message string `json:"message"`
 }

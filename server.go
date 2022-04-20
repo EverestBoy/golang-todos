@@ -31,7 +31,7 @@ func main() {
 		fmt.Fprintln(writer, "Up and runniing")
 	})
 
-	// auth handler
+	//// auth handler
 	router.HandleFunc("/login", authHandler.UserTokenLogin).Methods("GET")
 	router.HandleFunc("/login", authHandler.UserEmailLogin).Methods("POST")
 	router.HandleFunc("/register", authHandler.UserRegister).Methods("POST")

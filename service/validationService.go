@@ -15,4 +15,6 @@ import "todoGo/model"
 
 type ValidationService interface {
 	ValidateTodo(todo *model.TodoModel) error
+	ValidateUserRegister(user *model.User) error
+	ValidateCredentials(userCredentials *model.Credential) error
 }

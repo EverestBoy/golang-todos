@@ -11,11 +11,15 @@ package model
 @author everestboy
 */
 type TodosResponse struct {
-	Message string
-	Todos   []TodoModel
+	Message string      `json:"message"`
+	Todos   []TodoModel `json:"todos"`
 }
 
 type TodoResponse struct {
-	Message string
-	Todo    *TodoModel
+	Message string     `json:"message"`
+	Todo    *TodoModel `json:"todo"`
+}
+type UserResponse struct {
+	Message string    `json:"message"`
+	User    *UserView `json:"user"`
 }
