@@ -14,9 +14,9 @@ import "todoGo/model"
 */
 
 type TODORepository interface {
-	FindTodo(todoId *string) (*model.TodoModel, error)
-	FindAllTodo() ([]model.TodoModel, error)
-	SaveTodo(todo *model.TodoModel) (*model.TodoModel, error)
-	UpdateTodo(id *string, todo *model.TodoModel) (*model.TodoModel, error)
-	DeleteTodo(id *string) error
+	FindTodo(todoId *string, userId *string) (*model.TodoModel, error)
+	FindAllTodo(userId *string) ([]model.TodoModel, error)
+	SaveTodo(todo *model.TodoModel, userId *string) (*model.TodoModel, error)
+	UpdateTodo(id *string, userId *string, todo *model.TodoModel) (*model.TodoModel, error)
+	DeleteTodo(id *string, userId *string) error
 }

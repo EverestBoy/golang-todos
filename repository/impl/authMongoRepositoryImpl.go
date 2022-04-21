@@ -112,3 +112,29 @@ func (a authRepo) UserDetail(email *string, username *string) (*model.User, erro
 	}
 	return &user, nil
 }
+
+func (a authRepo) UserDetailById(userId *string) (*model.User, error) {
+	err, ctx, client, collection, cancel := dbConnectionUser.GetCollection("test", "user")
+	defer cancel()
+	if err != nil {
+		return nil, err
+	}
+	defer client.Disconnect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// checking if user exists or not
+	var user model.User
+	id, err := primitive.ObjectIDFromHex(*userId)
+	if err != nil {
+		return nil, err
+	}
+	userResult := collection.FindOne(ctx, bson.M{
+		"_id": id,
+	})
+	err = userResult.Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}

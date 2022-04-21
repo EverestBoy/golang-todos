@@ -25,7 +25,8 @@ func NewAuthService() service.AuthService {
 }
 
 var (
-	authRepo = impl.NewAuthRepository()
+	authRepo       = impl.NewAuthRepository()
+	jwtServiceImpl = NewJwtService()
 )
 
 func HashPassword(password string) (string, error) {
@@ -51,6 +52,12 @@ func (a authService) UserRegisterService(user *model.User) (*model.UserView, err
 	user.CreatedAt = currentTime
 	user.UpdatedAt = currentTime
 	user.Id = primitive.NewObjectID()
+	// getting jwt token for user
+	jwtToken, err := jwtServiceImpl.GetJwtToken(user.Id.Hex())
+	if err != nil {
+		return nil, err
+	}
+	// registering user
 	createdUser, err := authRepo.RegisterUser(user)
 	if err != nil {
 		return nil, err
@@ -58,10 +65,11 @@ func (a authService) UserRegisterService(user *model.User) (*model.UserView, err
 
 	// creating userview
 	var userView = model.UserView{
-		Username: createdUser.Username,
-		Phone:    createdUser.Phone,
-		Address:  createdUser.Address,
-		Email:    createdUser.Email,
+		Username:  createdUser.Username,
+		Phone:     createdUser.Phone,
+		Address:   createdUser.Address,
+		Email:     createdUser.Email,
+		UserToken: model.Token{Token: *jwtToken},
 	}
 	return &userView, nil
 
@@ -85,17 +93,46 @@ func (a authService) UserEmailLoginService(credential *model.Credential) (*model
 		return nil, failedAuth
 	}
 
+	// getting jwt token for user
+	jwtToken, err := jwtServiceImpl.GetJwtToken(user.Id.Hex())
+	if err != nil {
+		return nil, err
+	}
+
 	// creating user view as user password matches
 	var userView = model.UserView{
-		Username: user.Username,
-		Email:    user.Email,
-		Address:  user.Address,
-		Phone:    user.Phone,
+		Username:  user.Username,
+		Email:     user.Email,
+		Address:   user.Address,
+		Phone:     user.Phone,
+		UserToken: model.Token{Token: *jwtToken},
 	}
 	return &userView, nil
 }
 
 func (a authService) UserTokenLoginService(token *string) (*model.UserView, error) {
-	//TODO implement me
-	panic("implement me")
+	// verifying token
+	claim, err := jwtServiceImpl.VerifyJwtToken(*token)
+	if err != nil {
+		return nil, err
+	}
+	userId := claim.UserId
+	// getting user detail
+	user, err := authRepo.UserDetailById(&userId)
+	// getting jwt token for user
+	jwtToken, err := jwtServiceImpl.GetJwtToken(user.Id.Hex())
+	if err != nil {
+		return nil, err
+	}
+
+	// creating user view as user password matches
+	var userView = model.UserView{
+		Username:  user.Username,
+		Email:     user.Email,
+		Address:   user.Address,
+		Phone:     user.Phone,
+		UserToken: model.Token{Token: *jwtToken},
+	}
+	return &userView, nil
+
 }

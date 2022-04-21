@@ -26,27 +26,28 @@ func NewTodoService() service.TodoService {
 	return &todoService{}
 }
 
-func (s *todoService) FindTodo(id *string) (todoModel *model.TodoModel, err error) {
-	return repo.FindTodo(id)
+func (s *todoService) FindTodo(id *string, userId *string) (todoModel *model.TodoModel, err error) {
+	return repo.FindTodo(id, userId)
 }
-func (*todoService) FindAllTodos() ([]model.TodoModel, error) {
-	return repo.FindAllTodo()
+func (*todoService) FindAllTodos(userId *string) ([]model.TodoModel, error) {
+	return repo.FindAllTodo(userId)
 }
 
-func (s *todoService) CreateTodo(todo *model.TodoModel) (*model.TodoModel, error) {
+func (s *todoService) CreateTodo(todo *model.TodoModel, userId *string) (*model.TodoModel, error) {
 	todo.Id = primitive.NewObjectID()
 	var currentTime = time.Now()
 	todo.CreatedAt = currentTime
 	todo.UpdatedAt = currentTime
-	return repo.SaveTodo(todo)
+	todo.UserId = *userId
+	return repo.SaveTodo(todo, userId)
 }
 
-func (s *todoService) UpdateTodo(id *string, todo *model.TodoModel) (*model.TodoModel, error) {
+func (s *todoService) UpdateTodo(id *string, userId *string, todo *model.TodoModel) (*model.TodoModel, error) {
 	var currentTime = time.Now()
 	todo.UpdatedAt = currentTime
-	return repo.UpdateTodo(id, todo)
+	return repo.UpdateTodo(id, userId, todo)
 }
 
-func (s *todoService) DeleteTodo(id *string) (err error) {
-	return repo.DeleteTodo(id)
+func (s *todoService) DeleteTodo(id *string, userId *string) (err error) {
+	return repo.DeleteTodo(id, userId)
 }

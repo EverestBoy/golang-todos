@@ -16,9 +16,9 @@ import (
 */
 
 type TodoService interface {
-	FindTodo(id *string) (todoModel *model.TodoModel, err error)
-	FindAllTodos() ([]model.TodoModel, error)
-	CreateTodo(todo *model.TodoModel) (*model.TodoModel, error)
-	UpdateTodo(id *string, todo *model.TodoModel) (*model.TodoModel, error)
-	DeleteTodo(id *string) (err error)
+	FindTodo(id *string, userId *string) (todoModel *model.TodoModel, err error)
+	FindAllTodos(userId *string) ([]model.TodoModel, error)
+	CreateTodo(todo *model.TodoModel, userId *string) (*model.TodoModel, error)
+	UpdateTodo(id *string, userId *string, todo *model.TodoModel) (*model.TodoModel, error)
+	DeleteTodo(id *string, userId *string) (err error)
 }

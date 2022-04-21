@@ -33,7 +33,7 @@ func NewTodoRepository() repository.TODORepository {
 	return &repo{}
 }
 
-func (r repo) FindTodo(todoId *string) (*model.TodoModel, error) {
+func (r repo) FindTodo(todoId *string, userId *string) (*model.TodoModel, error) {
 	err, ctx, client, collection, cancel := dbConnection.GetCollection("test", "todo")
 	defer cancel()
 	if err != nil {
@@ -45,7 +45,15 @@ func (r repo) FindTodo(todoId *string) (*model.TodoModel, error) {
 	}
 	var todoResponse model.TodoModel
 	id, _ := primitive.ObjectIDFromHex(*todoId)
-	todoResult := collection.FindOne(ctx, bson.M{"_id": id})
+	todoResult := collection.FindOne(ctx, bson.D{
+		{
+			"$and",
+			[]bson.D{
+				bson.D{{"_id", id}},
+				bson.D{{"userId", *userId}},
+			},
+		},
+	})
 	err = todoResult.Decode(&todoResponse)
 	if err != nil {
 		return nil, err
@@ -53,14 +61,14 @@ func (r repo) FindTodo(todoId *string) (*model.TodoModel, error) {
 	return &todoResponse, nil
 }
 
-func (r repo) FindAllTodo() ([]model.TodoModel, error) {
+func (r repo) FindAllTodo(userId *string) ([]model.TodoModel, error) {
 	err, ctx, client, collection, cancel := dbConnection.GetCollection("test", "todo")
 	if err != nil {
 		return nil, err
 	}
 	defer cancel()
 	defer client.Disconnect(ctx)
-	cur, err := collection.Find(ctx, bson.D{})
+	cur, err := collection.Find(ctx, bson.M{"userId": *userId})
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +86,7 @@ func (r repo) FindAllTodo() ([]model.TodoModel, error) {
 	return todos, nil
 }
 
-func (r repo) SaveTodo(todo *model.TodoModel) (*model.TodoModel, error) {
+func (r repo) SaveTodo(todo *model.TodoModel, userId *string) (*model.TodoModel, error) {
 	err, ctx, client, collection, cancel := dbConnection.GetCollection("test", "todo")
 	defer cancel()
 	if err != nil {
@@ -94,11 +102,11 @@ func (r repo) SaveTodo(todo *model.TodoModel) (*model.TodoModel, error) {
 	}
 	insertedId := cur.InsertedID.(primitive.ObjectID).Hex()
 	log.Printf("Inserted todo %s", insertedId)
-	insertedTodo, err := r.FindTodo(&insertedId)
+	insertedTodo, err := r.FindTodo(&insertedId, userId)
 	return insertedTodo, err
 }
 
-func (r repo) UpdateTodo(id *string, todo *model.TodoModel) (*model.TodoModel, error) {
+func (r repo) UpdateTodo(id *string, userId *string, todo *model.TodoModel) (*model.TodoModel, error) {
 	err, ctx, client, collection, cancel := dbConnection.GetCollection("test", "todo")
 	defer cancel()
 	if err != nil {
@@ -108,15 +116,22 @@ func (r repo) UpdateTodo(id *string, todo *model.TodoModel) (*model.TodoModel, e
 	if err != nil {
 		return nil, err
 	}
-	todoModel, err := r.FindTodo(id)
+	todoModel, err := r.FindTodo(id, userId)
 	if err != nil {
 		return nil, err
 	}
 	todoModel.Title = todo.Title
 	todoModel.Description = todo.Description
 	todoModel.UpdatedAt = todo.UpdatedAt
-
-	filter := bson.M{"_id": todoModel.Id}
+	filter := bson.D{
+		{
+			"$and",
+			[]bson.D{
+				bson.D{{"_id", todoModel.Id}},
+				bson.D{{"userId", *userId}},
+			},
+		},
+	}
 	update := bson.D{
 		{"$set", todoModel},
 	}
@@ -127,10 +142,10 @@ func (r repo) UpdateTodo(id *string, todo *model.TodoModel) (*model.TodoModel, e
 
 	println(updated.UpsertedID)
 	log.Println("Updated todo " + *id)
-	return r.FindTodo(id)
+	return r.FindTodo(id, userId)
 }
 
-func (r repo) DeleteTodo(id *string) error {
+func (r repo) DeleteTodo(id *string, userId *string) error {
 	err, ctx, client, collection, cancel := dbConnection.GetCollection("test", "todo")
 	defer cancel()
 	if err != nil {
@@ -140,7 +155,7 @@ func (r repo) DeleteTodo(id *string) error {
 	if err != nil {
 		return err
 	}
-	todoModel, err := r.FindTodo(id)
+	todoModel, err := r.FindTodo(id, userId)
 	if err != nil {
 		return errors.Errorf("Cannot perform delete operation")
 	}

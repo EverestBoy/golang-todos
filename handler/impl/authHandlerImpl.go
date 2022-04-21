@@ -23,6 +23,7 @@ import (
 
 var (
 	authService = impl.NewAuthService()
+	jwtService  = impl.NewJwtService()
 )
 
 type handlerAuth struct{}
@@ -69,8 +70,30 @@ func (h handlerAuth) UserEmailLogin(resp http.ResponseWriter, req *http.Request)
 }
 
 func (h handlerAuth) UserTokenLogin(resp http.ResponseWriter, req *http.Request) {
-	//TODO implement me
-	panic("implement me")
+	start := time.Now()
+	log.Printf("Entered UserTokenLogin")
+	resp.Header().Set("Content-type", "application/json")
+	reqToken := req.Header.Get("Authorization")
+	if reqToken == "" {
+		resp.WriteHeader(http.StatusUnauthorized)
+		errorMessage := model.ErrorTextMessage{"Token authorizatoin failed"}
+		json.NewEncoder(resp).Encode(errorMessage)
+		return
+	}
+
+	// verifying the token
+	user, err := authService.UserTokenLoginService(&reqToken)
+	if err != nil {
+		resp.WriteHeader(http.StatusUnauthorized)
+		errorMessage := model.ErrorTextMessage{err.Error()}
+		json.NewEncoder(resp).Encode(errorMessage)
+		return
+	}
+	resp.WriteHeader(http.StatusAccepted)
+	successResponse := model.UserResponse{Message: "SUCCESS", User: user}
+	json.NewEncoder(resp).Encode(successResponse)
+	log.Printf("Completed UserTokenLogin , total time: %s", (time.Now().Sub(start)))
+
 }
 
 func (h handlerAuth) UserRegister(resp http.ResponseWriter, req *http.Request) {

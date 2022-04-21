@@ -25,6 +25,7 @@ import (
 var (
 	todoService       = impl.NewTodoService()
 	validationService = impl.NewValidationService()
+	jwtServiceImpl    = impl.NewJwtService()
 )
 
 type handlerTodo struct{}
@@ -34,7 +35,28 @@ func NewTODOHandler() handler.TODOHandler {
 }
 
 func (c handlerTodo) GetTodo(resp http.ResponseWriter, req *http.Request) {
+	// authenticating the user
+	start := time.Now()
+	log.Printf("Entered GetTodo")
 	resp.Header().Set("Content-type", "application/json")
+	reqToken := req.Header.Get("Authorization")
+	if reqToken == "" {
+		resp.WriteHeader(http.StatusUnauthorized)
+		errorMessage := model.ErrorTextMessage{"Token authorizatoin failed"}
+		json.NewEncoder(resp).Encode(errorMessage)
+		return
+	}
+	claim, err := jwtServiceImpl.VerifyJwtToken(reqToken)
+	if err != nil {
+		resp.WriteHeader(http.StatusUnauthorized)
+		errorMessage := err.Error()
+		json.NewEncoder(resp).Encode(errorMessage)
+		return
+	}
+	// getting user id from claim
+	userId := claim.UserId
+
+	// getting the id of todo
 	id := req.URL.Query().Get("id")
 	if id == "" {
 		resp.WriteHeader(http.StatusNetworkAuthenticationRequired)
@@ -43,7 +65,7 @@ func (c handlerTodo) GetTodo(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	todo, error := todoService.FindTodo(&id)
+	todo, error := todoService.FindTodo(&id, &userId)
 	if error != nil {
 		resp.WriteHeader(http.StatusNotFound)
 		errorMessage := model.ErrorTextMessage{ErrorMsg: error.Error()}
@@ -53,11 +75,32 @@ func (c handlerTodo) GetTodo(resp http.ResponseWriter, req *http.Request) {
 	resp.WriteHeader(http.StatusOK)
 	successResponse := model.TodoResponse{Message: "SUCCESS", Todo: todo}
 	json.NewEncoder(resp).Encode(successResponse)
+	log.Printf("Completed GetTodo , total time: %s", time.Now().Sub(start))
 }
 
 func (c handlerTodo) GetTodos(resp http.ResponseWriter, req *http.Request) {
+	// authenticating the user
+	start := time.Now()
+	log.Printf("Entered GetTodos")
 	resp.Header().Set("Content-type", "application/json")
-	todos, error := todoService.FindAllTodos()
+	reqToken := req.Header.Get("Authorization")
+	if reqToken == "" {
+		resp.WriteHeader(http.StatusUnauthorized)
+		errorMessage := model.ErrorTextMessage{"Token authorizatoin failed"}
+		json.NewEncoder(resp).Encode(errorMessage)
+		return
+	}
+	claim, err := jwtServiceImpl.VerifyJwtToken(reqToken)
+	if err != nil {
+		resp.WriteHeader(http.StatusUnauthorized)
+		errorMessage := err.Error()
+		json.NewEncoder(resp).Encode(errorMessage)
+		return
+	}
+	// getting user id from claim
+	userId := claim.UserId
+
+	todos, error := todoService.FindAllTodos(&userId)
 	if error != nil {
 		resp.WriteHeader(http.StatusNetworkAuthenticationRequired)
 		errorMessage := model.ErrorTextMessage{ErrorMsg: error.Error()}
@@ -67,14 +110,33 @@ func (c handlerTodo) GetTodos(resp http.ResponseWriter, req *http.Request) {
 	resp.WriteHeader(http.StatusOK)
 	successResponse := model.TodosResponse{Message: "SUCCESS", Todos: todos}
 	json.NewEncoder(resp).Encode(successResponse)
+	log.Printf("Completed GetTodos , total time: %s", time.Now().Sub(start))
 }
 
 func (c handlerTodo) AddTodos(resp http.ResponseWriter, req *http.Request) {
+	// authenticating the user
 	start := time.Now()
-	log.Printf("Entered todoCreation")
+	log.Printf("Entered AddTodos")
 	resp.Header().Set("Content-type", "application/json")
+	reqToken := req.Header.Get("Authorization")
+	if reqToken == "" {
+		resp.WriteHeader(http.StatusUnauthorized)
+		errorMessage := model.ErrorTextMessage{ErrorMsg: "token authorization failed"}
+		json.NewEncoder(resp).Encode(errorMessage)
+		return
+	}
+	claim, err := jwtServiceImpl.VerifyJwtToken(reqToken)
+	if err != nil {
+		resp.WriteHeader(http.StatusUnauthorized)
+		errorMessage := err.Error()
+		json.NewEncoder(resp).Encode(errorMessage)
+		return
+	}
+	// getting user id from claim
+	userId := claim.UserId
+
 	var todo model.TodoModel
-	err := json.NewDecoder(req.Body).Decode(&todo)
+	err = json.NewDecoder(req.Body).Decode(&todo)
 	if err != nil {
 		resp.WriteHeader(http.StatusUnprocessableEntity)
 		errorMessage := model.ErrorTextMessage{ErrorMsg: err.Error()}
@@ -90,11 +152,11 @@ func (c handlerTodo) AddTodos(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 	log.Println("Creating todo")
-	createdTodo, err := todoService.CreateTodo(&todo)
+	createdTodo, err := todoService.CreateTodo(&todo, &userId)
 
 	if err != nil {
 		log.Printf("Got error %c", err)
-		resp.WriteHeader(http.StatusNetworkAuthenticationRequired)
+		resp.WriteHeader(http.StatusNotFound)
 		errorMessage := model.ErrorTextMessage{ErrorMsg: err.Error()}
 		json.NewEncoder(resp).Encode(errorMessage)
 		return
@@ -106,9 +168,26 @@ func (c handlerTodo) AddTodos(resp http.ResponseWriter, req *http.Request) {
 }
 
 func (c handlerTodo) UpdateTodo(resp http.ResponseWriter, req *http.Request) {
+	// authenticating the user
 	start := time.Now()
-	log.Printf("Entered updateTodo")
+	log.Printf("Entered UpdateTodo")
 	resp.Header().Set("Content-type", "application/json")
+	reqToken := req.Header.Get("Authorization")
+	if reqToken == "" {
+		resp.WriteHeader(http.StatusUnauthorized)
+		errorMessage := model.ErrorTextMessage{"Token authorizatoin failed"}
+		json.NewEncoder(resp).Encode(errorMessage)
+		return
+	}
+	claim, err := jwtServiceImpl.VerifyJwtToken(reqToken)
+	if err != nil {
+		resp.WriteHeader(http.StatusUnauthorized)
+		errorMessage := err.Error()
+		json.NewEncoder(resp).Encode(errorMessage)
+		return
+	}
+	// getting user id from claim
+	userId := claim.UserId
 	id := req.URL.Query().Get("id")
 	if id == "" {
 		resp.WriteHeader(http.StatusNetworkAuthenticationRequired)
@@ -117,7 +196,7 @@ func (c handlerTodo) UpdateTodo(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 	var todo model.TodoModel
-	err := json.NewDecoder(req.Body).Decode(&todo)
+	err = json.NewDecoder(req.Body).Decode(&todo)
 	if err != nil {
 		resp.WriteHeader(http.StatusUnprocessableEntity)
 		errorMessage := model.ErrorTextMessage{ErrorMsg: err.Error()}
@@ -133,7 +212,7 @@ func (c handlerTodo) UpdateTodo(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 	log.Println("Updating todo")
-	updatedTodo, err := todoService.UpdateTodo(&id, &todo)
+	updatedTodo, err := todoService.UpdateTodo(&id, &userId, &todo)
 
 	if err != nil {
 		log.Printf("Got error %c", err)
@@ -149,7 +228,27 @@ func (c handlerTodo) UpdateTodo(resp http.ResponseWriter, req *http.Request) {
 }
 
 func (c handlerTodo) DeleteTodo(resp http.ResponseWriter, req *http.Request) {
+	// authenticating the user
+	start := time.Now()
+	log.Printf("Entered UpdateTodo")
 	resp.Header().Set("Content-type", "application/json")
+	reqToken := req.Header.Get("Authorization")
+	if reqToken == "" {
+		resp.WriteHeader(http.StatusUnauthorized)
+		errorMessage := model.ErrorTextMessage{"Token authorizatoin failed"}
+		json.NewEncoder(resp).Encode(errorMessage)
+		return
+	}
+	claim, err := jwtServiceImpl.VerifyJwtToken(reqToken)
+	if err != nil {
+		resp.WriteHeader(http.StatusUnauthorized)
+		errorMessage := err.Error()
+		json.NewEncoder(resp).Encode(errorMessage)
+		return
+	}
+	// getting user id from claim
+	userId := claim.UserId
+
 	id := req.URL.Query().Get("id")
 	if id == "" {
 		resp.WriteHeader(http.StatusNetworkAuthenticationRequired)
@@ -158,7 +257,7 @@ func (c handlerTodo) DeleteTodo(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	error := todoService.DeleteTodo(&id)
+	error := todoService.DeleteTodo(&id, &userId)
 	if error != nil {
 		resp.WriteHeader(http.StatusNotFound)
 		errorMessage := model.ErrorTextMessage{ErrorMsg: error.Error()}
@@ -168,4 +267,5 @@ func (c handlerTodo) DeleteTodo(resp http.ResponseWriter, req *http.Request) {
 	resp.WriteHeader(http.StatusOK)
 	var successResponse = model.MessageResponse{Message: fmt.Sprintf("Todo with id: %s is successfully deleted", id)}
 	json.NewEncoder(resp).Encode(successResponse)
+	log.Printf("Completed DeleteTodo , total time: %s", time.Now().Sub(start))
 }

@@ -16,4 +16,5 @@ import "todoGo/model"
 type AuthRepository interface {
 	RegisterUser(user *model.User) (*model.User, error)
 	UserDetail(email *string, username *string) (*model.User, error)
+	UserDetailById(userId *string) (*model.User, error)
 }
