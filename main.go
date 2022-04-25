@@ -26,7 +26,7 @@ var (
 
 func main() {
 	router := mux.NewRouter()
-	const port = ":8000"
+	const port = ":8080"
 	router.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		fmt.Fprintln(writer, "Up and runniing")
 	})
