@@ -86,12 +86,12 @@ func (a authRepo) RegisterUser(user *model.User) (*model.User, error) {
 }
 
 func (a authRepo) UserDetail(email *string, username *string) (*model.User, error) {
-	err, ctx, client, collection, cancel := dbConnectionUser.GetCollection("test", "user")
-	defer cancel()
+	err, ctx, _, collection, _ := dbConnectionUser.GetCollection("test", "user")
+	//defer cancel()
 	if err != nil {
 		return nil, err
 	}
-	defer client.Disconnect(ctx)
+	//defer client.Disconnect(ctx)
 	if err != nil {
 		return nil, err
 	}

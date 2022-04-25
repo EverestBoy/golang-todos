@@ -22,7 +22,7 @@ type MongoInterface interface {
 }
 
 const (
-	mongoURI = ""
+	mongoURI = "mongodb://0.tcp.in.ngrok.io:17816/test?retryWrites=true&w=majority"
 )
 
 type mongoDb struct{}

@@ -9,6 +9,7 @@ package impl
 
 import (
 	"errors"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 	"log"
@@ -30,7 +31,7 @@ var (
 )
 
 func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 4)
 	return string(bytes), err
 }
 
@@ -88,7 +89,9 @@ func (a authService) UserEmailLoginService(credential *model.Credential) (*model
 	}
 
 	// checking password as user exists
+	fmt.Println("Password")
 	passwordMatch := CheckPasswordHash(credential.Password, user.Password)
+	fmt.Println("Password")
 	if !passwordMatch {
 		return nil, failedAuth
 	}
